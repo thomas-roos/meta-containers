@@ -1,4 +1,4 @@
-require recipes-core/images/lcm-container-image-minimal.bb
+require recipes-core/images/lcm-container-minimal-image.bb
 
 SUMMARY = "IOT container image (orange split poc)"
 LICENSE = "MIT"
