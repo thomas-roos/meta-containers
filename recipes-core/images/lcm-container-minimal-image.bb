@@ -7,6 +7,7 @@ IMAGE_FSTYPES ?= "container tar.bz2 oci"
 IMAGE_CMD ?= "/sbin/init"
 
 inherit image
+inherit image-oci
 
 IMAGE_FEATURES = ""
 
