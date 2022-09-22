@@ -6,14 +6,12 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4
 
 IMAGE_INSTALL += "\
     packagegroup-amx-core \
-    amx-greeter-app \
+    amx-greeter-plugin \
     amxb-inspect \
     amx-fcgi \
     lighttpd \
     amx-cli \
-    libimtp \
-    libusp \
-    libuspprotobuf \
+    mod-ba-cli \
     mod-amxb-usp \
     usp-endpoint \
 "
