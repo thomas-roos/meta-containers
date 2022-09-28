@@ -21,4 +21,5 @@ IMAGE_INSTALL = " \
     base-files \
     base-passwd \
     busybox \
+    syslog-ng \
 "
