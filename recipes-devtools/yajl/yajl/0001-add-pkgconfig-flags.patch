@@ -1,0 +1,21 @@
+From 871510053981333affaf16912d574458923e524d Mon Sep 17 00:00:00 2001
+From: Alexandre GIGLEUX <alexandre.gigleux@softathome.com>
+Date: Thu, 22 Apr 2021 17:39:39 +0200
+Subject: [PATCH] add pkgconfig flags
+
+---
+ src/yajl.pc.cmake | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/yajl.pc.cmake b/src/yajl.pc.cmake
+index 6eaca14..87c2817 100644
+--- a/src/yajl.pc.cmake
++++ b/src/yajl.pc.cmake
+@@ -5,5 +5,5 @@ includedir=${dollar}{prefix}/include/yajl
+ Name: Yet Another JSON Library
+ Description: A Portable JSON parsing and serialization library in ANSI C
+ Version: ${YAJL_MAJOR}.${YAJL_MINOR}.${YAJL_MICRO}
+-Cflags: -I${dollar}{includedir}
+-Libs: -L${dollar}{libdir} -lyajl
++Cflags: -DYAJL_VERSION2
++Libs: -lyajl

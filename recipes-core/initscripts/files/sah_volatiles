@@ -1,0 +1,8 @@
+d root root 0755 /var/volatile/dev none
+d root root 0755 /var/volatile/etc none
+d root root 0755 /var/volatile/ntp none
+d root root 0755 /var/volatile/dect none
+l root root 0755 /var/dev /var/volatile/dev
+l root root 0755 /var/etc /var/volatile/etc
+l root root 0755 /var/ntp /var/volatile/ntp
+l root root 0755 /var/dect /var/volatile/dect

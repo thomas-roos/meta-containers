@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set PATH=/usr/sbin:/sbin:/bin
+
+SECURE_MOUNT_OPTION="nosuid,nodev,noexec"
+SECURE_MOUNT_OPTION_DEV="nosuid,noexec"
+
+# Make sure /sys is mounted with the right permissions
+# SysVInit mounts /sys in /etc/rcS.d/S02sysfs.sh
+if [ -n "$(grep sysfs /proc/mounts)" ]; then
+    mount -o remount,$SECURE_MOUNT_OPTION /sys
+fi
+
+if [ -e /proc/bus/usb ]; then
+    mount -t usbfs -o $SECURE_MOUNT_OPTION none /proc/bus/usb
+fi
+
+if [ -n "$(grep pstore /proc/filesystems)" ] ; then
+  mount -t pstore -o $SECURE_MOUNT_OPTION none /mnt/pstore
+fi
+
+if [ -e /proc/cgroups ]; then
+  mount -t tmpfs -o $SECURE_MOUNT_OPTION cgroup_root /sys/fs/cgroup
+  for CGROUP in $(awk '!/#/{print $1}' /proc/cgroups); do
+    mkdir /sys/fs/cgroup/$CGROUP
+    mount -t cgroup -o $SECURE_MOUNT_OPTION,$CGROUP $CGROUP /sys/fs/cgroup/$CGROUP
+  done
+fi
+
+if [ -n "$(grep devpts /proc/filesystems)" ]; then
+    mkdir -p /dev/pts
+    mount -t devpts -o $SECURE_MOUNT_OPTION_DEV devpts /dev/pts
+fi
+
+if [ -e /etc/init.d/normal_boot ]; then
+    /etc/init.d/normal_boot
+fi

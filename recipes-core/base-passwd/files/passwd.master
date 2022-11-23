@@ -1,0 +1,14 @@
+root:$1$CZi8tPpY$3TvoKi.Vc6v1uCViQb2Lh/:0:0:root:/root:/bin/sh
+ftp:x:50:50:ftp:/var/usbmount/./:/bin/false
+nobody:x:99:99:Nobody:/:/bin/false
+avahi:x:104:104:avahi:/:/bin/false
+radvd:x:111:111:radvd:/:/bin/false
+ntpd:x:112:112:ntpd:/:/bin/false
+upnpd:x:113:113:upnpd:/:/bin/false
+upnpdiscd:x:114:114:upnpdiscd:/:/bin/false
+samba:x:120:120:samba:/:/bin/false
+httpd:x:121:121:httpd:/:/bin/false
+dlna:x:123:123:dlna:/:/bin/false
+pass:x:124:124:pass:/:/bin/false
+figaro:x:125:125:figaro:/:/bin/false
+pcbapp:x:126:126:pcbapp:/:/bin/false
