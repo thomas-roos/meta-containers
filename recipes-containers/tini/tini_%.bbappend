@@ -2,6 +2,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI += "file://init-chain-script.sh"
 SRC_URI += "file://sbininit.sh"
 
+RDEPENDS:${PN} += "bash"
 
 do_install:append () {
     # install the script neccesary to make tini somewhat multiprocess
