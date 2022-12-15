@@ -8,6 +8,7 @@ IMAGE_INSTALL += "\
     ubus \
     mod-amxb-ubus \
     libubox \
+    ubusd \
 "
 
 OCI_IMAGE_ENTRYPOINT ??= "/sbin/init"
