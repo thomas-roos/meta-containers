@@ -14,7 +14,7 @@ mail:*:8:8:mail:/var/mail:/bin/sh
 pcbapp::126:
 autocert::127:pass
 pcb_users::1000:
-http::1001:
+httpd::1001:
 hgwcfg::1002:pass,figaro,pcbapp
 config::1003:pcbapp
 container::1004:pass,pcbapp
