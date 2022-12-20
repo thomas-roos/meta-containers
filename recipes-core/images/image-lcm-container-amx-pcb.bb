@@ -11,10 +11,10 @@ IMAGE_INSTALL += "\
     pcb-cli \
     pcb-ser-odl \
     pcb-ser-ddw \
+    pcb-ser-http \
     mod-amxb-pcb \
+    pcb-app \
 "
-
-#     pcb-app
 
 OCI_IMAGE_ENTRYPOINT ??= "/sbin/init"
 OCI_IMAGE_ENTRYPOINT_ARGS ??= "/bin/sh"
