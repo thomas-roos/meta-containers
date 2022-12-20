@@ -68,4 +68,11 @@ IMAGE_CMD:oci:append() {
         ${name_arg} \
         ${vendor_arg} \
         ${version_arg}
+
+    ## re'tar the oci bundle again so it has the annotation
+    rm -f "${image_name}.tar"
+    # make a tar version of the image direcotry
+    if [ -n "${OCI_IMAGE_TAR_OUTPUT}" ]; then
+        tar -cf "${image_name}.tar" "${image_name}"
+    fi
 }
