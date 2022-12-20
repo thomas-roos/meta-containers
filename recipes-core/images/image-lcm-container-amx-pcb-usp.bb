@@ -10,5 +10,6 @@ IMAGE_INSTALL += "\
     controller-container \
 "
 
-OCI_IMAGE_ENTRYPOINT ??= "/sbin/init"
-OCI_IMAGE_ENTRYPOINT_ARGS ??= "/bin/sh"
+OCI_IMAGE_ENTRYPOINT ?= "/sbin/init"
+OCI_IMAGE_ENTRYPOINT_ARGS ?= "/bin/sh"
+OCI_IMAGE_ANNOTATION_MOUNTS += "/var/run/imtp/:/run/imtp/"

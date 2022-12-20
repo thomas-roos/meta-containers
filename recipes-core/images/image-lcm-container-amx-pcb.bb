@@ -16,5 +16,5 @@ IMAGE_INSTALL += "\
     pcb-app \
 "
 
-OCI_IMAGE_ENTRYPOINT ??= "/sbin/init"
-OCI_IMAGE_ENTRYPOINT_ARGS ??= "/bin/sh"
+OCI_IMAGE_ENTRYPOINT ?= "/sbin/init"
+OCI_IMAGE_ENTRYPOINT_ARGS ?= "/bin/sh"
