@@ -3,6 +3,9 @@ FILES:${PN}-dev = ""
 FILES:${PN} = ""
 FILES:${PN}-staticdev = ""
 
+FILES:${PN} += "/usr/share/sah_config/libpcb-jsonvp.cfg"
+FILES:${PN}-dev = "/usr/lib/pkgconfig/*.pc"
+
 FILES:${PN} += "/lib/libpcb_jsonvp${SOLIBS}"
 FILES:${PN}-dev += "${INCLUDEDIR}/pcb_jsonvp.h"
 FILES:${PN}-dev += "${PKG_CONFIG_LIBDIR}/pcb_jsonvp.pc"
