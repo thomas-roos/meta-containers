@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /usr/bin/docker-init /etc/init-chain-script.sh $@
+exec /usr/bin/docker-init -- /usr/bin/inf-init-esimal $@
