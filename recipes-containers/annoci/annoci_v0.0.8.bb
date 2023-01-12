@@ -1,7 +1,7 @@
 inherit sah_base
 
 SRC_URI = "git://${GIT_BASE_URL}/iot/lcm/tooling/annoci.git;protocol=https;nobranch=1;;nobranch=1;"
-SRCREV = "v0.0.7"
+SRCREV = "v0.0.8"
 
 S = "${WORKDIR}/git"
 SUMMARY = "Annoci is a python script to add annotations to the oci image bundle"
