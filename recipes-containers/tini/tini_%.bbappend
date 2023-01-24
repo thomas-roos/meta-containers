@@ -9,3 +9,5 @@ do_install:append () {
     install -D -m 0555 ${WORKDIR}/sbininit.sh ${D}/sbin/init
 }
 
+### Note: Tini will be pid1 and all child processes where parents died (think shell scripts) are reparented to tini,
+###       if you want to use it with inf-init-esimal, you will need to use a beloved child process.

@@ -21,7 +21,6 @@ NO_RECOMMENDATIONS = "1"
 PREFERRED_PROVIDER_virtual/kernel = "linux-dummy"
 
 IMAGE_INSTALL = " \
-    tini \
     inf-init-esimal \
     base-files \
     base-passwd \
