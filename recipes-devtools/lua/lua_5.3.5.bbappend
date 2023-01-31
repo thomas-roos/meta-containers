@@ -34,4 +34,3 @@ FILES:${PN} += "/usr/bin/lua"
 FILES:${PN}-dev = "/usr/lib/pkgconfig/lua.pc"
 FILES:${PN}-dev += "/usr/lib/liblua.so.*"
 FILES:${PN}-dev += "/usr/include/*"
-

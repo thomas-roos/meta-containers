@@ -15,5 +15,7 @@ FILES:${PN} += "/usr/bin/amx_monitor_dm"
 FILES:${PN} += "/usr/bin/amx_wait_for"
 FILES:${PN} += "/usr/lib/lua/5.3/lamx.so"
 FILES:${PN} += "/usr/share/lua/5.3/lamx_wait_for.lua"
+FILES:${PN} +=  "/usr/share/sah_config/lua-amx.cfg"
+
 FILES_SOLIBSDEV = ""
 INSANE_SKIP:${PN} += "dev-so"
