@@ -20,4 +20,3 @@ IMAGE_FEATURES += " \
                    usp-endpoint \
                    "
 
-
