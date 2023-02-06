@@ -1,41 +1,23 @@
-require conf/lcm/lcm_oci.conf
+# Compare  from basic image, this image will add the tools to communicate between host and the container
 
-SUMMARY = "An extremely minimal lcm container image"
+require recipes-core/images/image-lcm-container-basic.bb
 
-LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
+# Value to define
+LCM_SYSBUS ??= "ubus"
+# You should set the sysbus feature : Choice : pcb-bus | ubus
+# if PCB sys selected, other configuration exist:
+# Change startup script to 11 (from default 01)
+# CONFIG_PCB_SYSBUS_LVL ?= "11"
+# PCB_USERID
+# PCB_GROUPID
+# PCB_USERMNGT_GROUPID
+# You should think to override the default values defined in the pcb-defaut conf
 
-IMAGE_FSTYPES ?= "container tar.bz2 oci"
-IMAGE_CMD ?= "/bin/sh"
 
-inherit image
-inherit image-oci
-inherit image-oci-annotations
+# Default feature to provide a LCM container image type
+IMAGE_FEATURES += " \
+                   amx \
+                   usp-endpoint \
+                   "
 
-IMAGE_FEATURES = ""
-
-IMAGE_LINGUAS = ""
-
-NO_RECOMMENDATIONS = "1"
-
-PREFERRED_PROVIDER_virtual/kernel = "linux-dummy"
-
-IMAGE_INSTALL = " \
-    inf-init-esimal \
-    base-files \
-    base-passwd \
-    busybox \
-    syslog-ng \
-    bash \
-"
-
-IMAGE_INSTALL:append:develop += "\
-     strace procps gdb valgrind tcpdump binutils nano \
-"
-
-IMAGE_INSTALL:append:release += "\
-"
-
-OCI_IMAGE_ENTRYPOINT ?= "/sbin/init"
-OCI_IMAGE_ENTRYPOINT_ARGS ?= "/bin/sh"
 
