@@ -199,7 +199,7 @@ IMAGE_CMD:oci() {
 	bbdebug 1 "umoci config --image $image_name  --os ${OCI_IMAGE_OS}"
 	umoci config --image $image_name  --os ${OCI_IMAGE_OS}
     fi
-    if [ -n "${OCI_IMAGE_ANNOTATIONS}" ]; then
+    if [ -n "${OCI_IMAGE_ANNOTATIONS}"  || "${OCI_IMAGE_ANNOTATIONS}" != " " ]; then
 	bbdebug 1 "umoci config --image $image_name  --manifest.annotation ${OCI_IMAGE_ANNOTATIONS}"
 	umoci config --image $image_name  --manifest.annotation ${OCI_IMAGE_ANNOTATIONS}
     fi

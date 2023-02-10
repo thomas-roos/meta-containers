@@ -27,10 +27,6 @@ FEATURE_PACKAGES_python-amx += "\
     python3-setuptools \
 "
 
-# Automatically determine the bus to include according the DISTRO_Feature variable
-IMAGE_FEATURES += "${@bb.utils.contains('LCM_SYSBUS','ubus','ubus','',d)}"
-IMAGE_FEATURES += "${@bb.utils.contains('LCM_SYSBUS','pcb-bus','pcb-bus','',d)}"
-
 python do_notification() {
     sysbus = d.getVar('LCM_SYSBUS')
     bb.warn("Sysbus selected : {}".format(sysbus))

@@ -20,3 +20,11 @@ IMAGE_FEATURES += " \
                    usp-endpoint \
                    "
 
+# Automatically determine the bus to include according the DISTRO_Feature variable
+IMAGE_FEATURES += "${@bb.utils.contains('LCM_SYSBUS','ubus','ubus','',d)}"
+IMAGE_FEATURES += "${@bb.utils.contains('LCM_SYSBUS','pcb-bus','pcb-bus','',d)}"
+
+
+OCI_IMAGE_ENTRYPOINT ?= "/sbin/init"
+OCI_IMAGE_ANNOTATION_MOUNTS ?= "/var/run/imtp/:/run/imtp/"
+
