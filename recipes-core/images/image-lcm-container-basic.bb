@@ -28,5 +28,5 @@ IMAGE_INSTALL:append:release += "\
 "
 
 OCI_IMAGE_ENTRYPOINT ?= "/sbin/init"
-OCI_IMAGE_ENTRYPOINT_ARGS ?= "/bin/sh"
+OCI_IMAGE_ENTRYPOINT_ARGS ?= ""
 

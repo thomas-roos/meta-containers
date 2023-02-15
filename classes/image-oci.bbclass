@@ -199,7 +199,7 @@ IMAGE_CMD:oci() {
 	bbdebug 1 "umoci config --image $image_name  --os ${OCI_IMAGE_OS}"
 	umoci config --image $image_name  --os ${OCI_IMAGE_OS}
     fi
-    if [ -n "${OCI_IMAGE_ANNOTATIONS}"  || "${OCI_IMAGE_ANNOTATIONS}" != " " ]; then
+    if [ -n "${OCI_IMAGE_ANNOTATIONS}" ]  && [ "${OCI_IMAGE_ANNOTATIONS}" != " " ]; then
 	bbdebug 1 "umoci config --image $image_name  --manifest.annotation ${OCI_IMAGE_ANNOTATIONS}"
 	umoci config --image $image_name  --manifest.annotation ${OCI_IMAGE_ANNOTATIONS}
     fi
@@ -228,6 +228,8 @@ IMAGE_CMD:oci() {
 
     # We could make this optional, since the bundle is directly runnable via runc
     rm -rf $image_bundle_name
+
+    ln -sfr ${IMAGE_NAME}${IMAGE_NAME_SUFFIX}-oci ${IMAGE_LINK_NAME}${IMAGE_NAME_SUFFIX}-oci
 }
 
 
