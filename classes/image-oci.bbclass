@@ -81,12 +81,15 @@ def do_annotation_mount_format(d):
 
     mount_annotation_data = { "tr-181": [ ]}
 
-    if not d.getVar('OCI_IMAGE_ANNOTATION_MOUNTS'):
+
+    if not d.getVar('OCI_IMAGE_ANNOTATION_MOUNTS',True):
         return ""
 
     for mount in d.getVar('OCI_IMAGE_ANNOTATION_MOUNTS',True).split(" "):
-        source, dest = mount.split(':')
-        mount_annotation_data["tr-181"].append({"Source": source, "Destination": dest})
+        if mount != "":
+            source, dest = mount.split(':')
+            mount_annotation_data["tr-181"].append({"Source": source, "Destination": dest})
+    
     mount_annotation_json = json.dumps(mount_annotation_data)
     print("Generated mount string:\n{0}\n".format(mount_annotation_json))
     return "'org.prplfoundation.mounts={0}'".format(mount_annotation_json)

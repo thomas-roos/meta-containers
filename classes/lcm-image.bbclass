@@ -28,7 +28,8 @@ FEATURE_PACKAGES_python-amx += "\
 
 python do_notification() {
     sysbus = d.getVar('LCM_SYSBUS')
-    bb.warn("Sysbus selected : {}".format(sysbus))
+    if sysbus :
+        bb.warn("Sysbus selected : {}".format(sysbus))
 }
 do_notification[nostamp] = "1"
 addtask do_notification before do_image
