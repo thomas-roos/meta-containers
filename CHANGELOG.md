@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## Release honister_v1.0.0 - 2023-08-11(15:21:30 +0000)
+
+### Removed
+
+- [inf-init-esimal](https://${GIT_BASE_URL}/iot/lcm/tooling/inf-init-esimal): Component removed
+
 ## Release honister_v0.1.6 - 2023-07-03(15:58:11 +0000)
 
 ## Release honister_v0.1.5 - 2023-04-25(10:48:09 +0000)
