@@ -166,7 +166,10 @@ IMAGE_CMD:oci() {
 
     bbdebug 1 "OCI: populating rootfs"
     bbdebug 1 "OCI: cp -r ${IMAGE_ROOTFS}/* $image_bundle_name/rootfs/"
+    # enable dotglob to allow copying hidden files from the root directory
+    shopt -s dotglob
     cp -r ${IMAGE_ROOTFS}/* $image_bundle_name/rootfs
+    shopt -u dotglob
 
     bbdebug 1 "OCI: umoci repack --image $image_name:${OCI_IMAGE_TAG} $image_bundle_name"
     umoci repack --image $image_name:${OCI_IMAGE_TAG} $image_bundle_name
