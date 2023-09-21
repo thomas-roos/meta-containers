@@ -1,5 +1,3 @@
-inherit sah_base
-
 SRC_URI = "git://${GIT_BASE_URL}/iot/lcm/tooling/annoci.git;protocol=https;nobranch=1;;nobranch=1;"
 SRCREV = "v0.0.8"
 
@@ -13,6 +11,14 @@ LIC_FILES_CHKSUM = " \
 RDEPENDS:${PN} += "python3"
 
 COMPONENT = "annoci"
+
+EXTRA_OEMAKE += "DEST=${D} \
+                 PREFIX=${prefix} \
+                 LIBDIR=${libdir} \
+                 BINDIR=${bindir} \
+                 INCLUDEDIR=${includedir} \
+                 "
+
 FILES:${PN} += "/usr/bin/${COMPONENT}"
 
 BBCLASSEXTEND = "native nativesdk"
