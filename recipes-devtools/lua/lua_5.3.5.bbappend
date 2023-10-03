@@ -26,11 +26,12 @@ do_install () {
     rmdir ${D}${datadir}/lua
 }
 
-FILES:${PN} = "/usr/lib/liblua.so"
+FILES:${PN} = "/usr/lib/liblua.so.5.3"
 FILES:${PN} += "/usr/lib/lua/5.3/"
 FILES:${PN} += "/usr/bin/luac"
 FILES:${PN} += "/usr/bin/lua"
 
 FILES:${PN}-dev = "/usr/lib/pkgconfig/lua.pc"
-FILES:${PN}-dev += "/usr/lib/liblua.so.*"
+FILES:${PN}-dev += "/usr/lib/liblua.so"
+FILES:${PN}-dev += "/usr/lib/liblua.so.5.3.4"
 FILES:${PN}-dev += "/usr/include/*"
