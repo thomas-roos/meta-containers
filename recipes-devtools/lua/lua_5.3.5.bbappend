@@ -16,7 +16,7 @@ do_install () {
         'INSTALL_SHARE=${D}${datadir}/lua' \
         'INSTALL_LIB=${D}${libdir}' \
         'INSTALL_CMOD=${D}${libdir}/lua/5.3' \
-        'TO_LIB=liblua.so.5.3 liblua.so.5.3.4' \
+        'TO_LIB=liblua.so liblua.so.5.3 liblua.so.5.3.4' \
         install
     install -d ${D}${libdir}/pkgconfig
 
@@ -27,6 +27,7 @@ do_install () {
 }
 
 FILES:${PN} = "/usr/lib/liblua.so.5.3"
+FILES:${PN} += "/usr/lib/liblua.so"
 FILES:${PN} += "/usr/lib/lua/5.3/"
 FILES:${PN} += "/usr/bin/luac"
 FILES:${PN} += "/usr/bin/lua"
