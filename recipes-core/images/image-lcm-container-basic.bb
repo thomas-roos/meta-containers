@@ -27,6 +27,13 @@ IMAGE_INSTALL:append:develop += "\
 IMAGE_INSTALL:append:release += "\
 "
 
+copy_manifest_to_image() {
+    # Copy the file to the root directory of the image
+    cp ${IMAGE_MANIFEST} ${IMAGE_ROOTFS}/components.txt
+}
+
+IMAGE_PREPROCESS_COMMAND:append += " copy_manifest_to_image ; "
+
 OCI_IMAGE_ENTRYPOINT ?= "/sbin/init"
 OCI_IMAGE_ENTRYPOINT_ARGS ?= ""
 OCI_IMAGE_ANNOTATION_MOUNTS ?= ""
