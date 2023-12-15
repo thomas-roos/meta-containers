@@ -11,6 +11,7 @@ IMAGE_CMD ?= "/bin/sh"
 inherit image
 inherit lcm-image
 inherit image-oci
+inherit lcm-override-rootfs
 
 IMAGE_FEATURES += "lcm-core"
 
@@ -27,12 +28,12 @@ IMAGE_INSTALL:append:develop += "\
 IMAGE_INSTALL:append:release += "\
 "
 
-copy_manifest_to_image() {
+do_copy_manifest_to_image() {
     # Copy the file to the root directory of the image
     cp ${IMAGE_MANIFEST} ${IMAGE_ROOTFS}/components.txt
 }
 
-IMAGE_PREPROCESS_COMMAND:append += " copy_manifest_to_image ; "
+addtask copy_manifest_to_image after do_image do_rootfs
 
 OCI_IMAGE_ENTRYPOINT ?= "/sbin/init"
 OCI_IMAGE_ENTRYPOINT_ARGS ?= ""
