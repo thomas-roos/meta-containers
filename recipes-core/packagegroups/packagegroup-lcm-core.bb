@@ -12,6 +12,5 @@ RDEPENDS:${PN} =" \
     base-files \
     base-passwd \
     busybox \
-    syslog-ng \
     bash \
 "
