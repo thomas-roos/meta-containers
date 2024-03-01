@@ -90,12 +90,14 @@ def do_annotation_mount_format(d):
             source, dest = mount.split(':')
             mount_annotation_data["tr-181"].append({"Source": source, "Destination": dest})
     
-    mount_annotation_json = json.dumps(mount_annotation_data)
-    print("Generated mount string:\n{0}\n".format(mount_annotation_json))
-    return "'org.prplfoundation.mounts={0}'".format(mount_annotation_json)
+    mount_annotation_json = json.dumps(mount_annotation_data).replace(" ", "")
+    print("Generated mount annotation string:\n{0}\n".format(mount_annotation_json))
+    return "'org.prplfoundation.mounts={0}'".format(mount_annotation_json).replace(" ", "")
 
-
-OCI_IMAGE_ANNOTATIONS += "${@do_annotation_mount_format(d)}"
+OCI_IMAGE_ANNOTATIONS += "\
+                        ${@do_annotation_mount_format(d)}\
+                        ${OCI_IMAGE_CUSTOM_ANNOTATIONS}\
+"
 
 # Generate a subarch that is appropriate to OCI image
 # types. This is typically only ARM architectures at the
@@ -205,9 +207,26 @@ IMAGE_CMD:oci() {
 	bbdebug 1 "umoci config --image $image_name  --os ${OCI_IMAGE_OS}"
 	umoci config --image $image_name  --os ${OCI_IMAGE_OS}
     fi
+    if [ -n "${OCI_IMAGE_ANNOTATION_NAME}" ] && [ "${OCI_IMAGE_ANNOTATION_NAME}" != "" ]; then
+        bbdebug 1 "umoci config --image $image_name  --manifest.annotation \"org.opencontainers.image.ref.name=${OCI_IMAGE_ANNOTATION_NAME}\""
+        umoci config --image $image_name  --manifest.annotation "org.opencontainers.image.ref.name=${OCI_IMAGE_ANNOTATION_NAME}"
+    fi
+    if [ -n "${OCI_IMAGE_ANNOTATION_VENDOR}" ] && [ "${OCI_IMAGE_ANNOTATION_VENDOR}" != "" ]; then
+        bbdebug 1 "umoci config --image $image_name  --manifest.annotation \"org.opencontainers.image.vendor=${OCI_IMAGE_ANNOTATION_VENDOR}\""
+        umoci config --image $image_name  --manifest.annotation "org.opencontainers.image.vendor=${OCI_IMAGE_ANNOTATION_VENDOR}"
+    fi
+    if [ -n "${OCI_IMAGE_ANNOTATION_DESCRIPTION}" ] && [ "${OCI_IMAGE_ANNOTATION_DESCRIPTION}" != "" ]; then
+        bbdebug 1 "umoci config --image $image_name  --manifest.annotation \"org.opencontainers.image.description=${OCI_IMAGE_ANNOTATION_VENDOR}\""
+        umoci config --image $image_name  --manifest.annotation "org.opencontainers.image.description=${OCI_IMAGE_ANNOTATION_DESCRIPTION}"
+    fi
     if [ -n "${OCI_IMAGE_ANNOTATIONS}" ]  && [ "${OCI_IMAGE_ANNOTATIONS}" != " " ]; then
-	bbdebug 1 "umoci config --image $image_name  --manifest.annotation ${OCI_IMAGE_ANNOTATIONS}"
-	umoci config --image $image_name  --manifest.annotation ${OCI_IMAGE_ANNOTATIONS}
+    for annotation in "${OCI_IMAGE_ANNOTATIONS}"; do
+        if [ "${annotation}" != "None" ]; then
+            bbdebug 1 "annotation = ${annotation}"
+            bbdebug 1 "umoci config --image $image_name  --manifest.annotation ${annotation}"
+            umoci config --image $image_name  --manifest.annotation ${annotation}
+        fi
+    done
     fi
     bbdebug 1 "umoci config --image $image_name  --architecture ${OCI_IMAGE_ARCH}"
     umoci config --image $image_name  --architecture ${OCI_IMAGE_ARCH}
@@ -226,11 +245,21 @@ IMAGE_CMD:oci() {
     umoci gc --layout $image_name
 
     # make a tar version of the image direcotry
+    #  1) image_name.tar: compatible with oci tar format, blobs and rootfs
+    #     are at the top level. Can load directly from something like podman
+    #  2) image_name-dir.tar: original format from meta-virt, is just a tar'd
+    #     up oci image directory (compatible with skopeo :dir format)
     if [ -n "${OCI_IMAGE_TAR_OUTPUT}" ]; then
-	tar -cf "$image_name.tar" "$image_name"
+    (
+	    cd "$image_name"
+	    tar -cf ../"$image_name.tar" "."
+	)
+	tar -cf "$image_name-dir.tar" "$image_name"
+
+	# create a convenience symlink
+	ln -sf "$image_name.tar" "${IMAGE_BASENAME}-${OCI_IMAGE_TAG}-rootfs-oci.tar"
+	ln -sf "$image_name-dir.tar" "${IMAGE_BASENAME}-${OCI_IMAGE_TAG}-rootfs-oci-dir.tar"
     fi
-
-
 
     # We could make this optional, since the bundle is directly runnable via runc
     rm -rf $image_bundle_name

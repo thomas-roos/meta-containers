@@ -10,7 +10,7 @@ IMAGE_CMD ?= "/bin/sh"
 
 inherit image
 inherit lcm-image
-inherit image-oci
+inherit image-lcm-oci
 inherit lcm-override-rootfs
 inherit image-manifest-to-rootfs
 
