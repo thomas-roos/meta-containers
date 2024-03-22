@@ -38,10 +38,9 @@ ROOTFS_BOOTSTRAP_INSTALL = ""
 # we want container and tar.bz2's to be created
 IMAGE_TYPEDEP:oci = "container tar.bz2"
 
-# sloci is the script/project that will create the oci image
-# OCI_IMAGE_BACKEND ?= "sloci-image"
-OCI_IMAGE_BACKEND ?= "umoci"
-do_image_oci[depends] += "${OCI_IMAGE_BACKEND}-native:do_populate_sysroot"
+
+#OCI_IMAGE_BACKEND ?= "umoci"
+do_image_oci[depends] += "umoci-native:do_populate_sysroot"
 
 #
 # image type configuration block
@@ -49,15 +48,18 @@ do_image_oci[depends] += "${OCI_IMAGE_BACKEND}-native:do_populate_sysroot"
 OCI_IMAGE_AUTHOR ??= "${PATCH_GIT_USER_NAME}"
 OCI_IMAGE_AUTHOR_EMAIL ??= "${PATCH_GIT_USER_EMAIL}"
 
-OCI_IMAGE_TAG ??= "latest"
+# we assume that IMAGE_VERSION_SUFFIX starts with '-'
 OCI_IMAGE_RUNTIME_UID ??= ""
 
+OCI_IMAGE_OS ??= "linux"
 OCI_IMAGE_ARCH ??= "${TARGET_ARCH}"
 OCI_IMAGE_SUBARCH ??= "${@oci_map_subarch(d.getVar('TARGET_ARCH'), d.getVar('TUNE_FEATURES'), d)}"
+OCI_IMAGE_TAG ??= "${@strip_image_version_suffix(d)}"
+OCI_IMAGE_STOPSIGNAL ??= "SIGPWR"
 
 OCI_IMAGE_ENTRYPOINT ??= "sh"
 OCI_IMAGE_ENTRYPOINT_ARGS ??= ""
-OCI_IMAGE_WORKINGDIR ??= ""
+OCI_IMAGE_WORKINGDIR ??= "/"
 
 # List of ports to expose from a container running this image:
 #  PORT[/PROT]  
@@ -72,32 +74,39 @@ OCI_IMAGE_ENV_VARS ??= ""
 # whether the oci image dir should be left as a directory, or
 # bundled into a tarball.
 OCI_IMAGE_TAR_OUTPUT ??= "true"
+OCI_REUSE_IMAGE ??= "false"
 
-OCI_IMAGE_ANNOTATIONS ??= ""
+OCI_IMAGE_CUSTOM_ANNOTATIONS ??= ""
+OCI_IMAGE_ANNOTATIONS ??= "${@annotation_mount_format(d)} ${OCI_IMAGE_CUSTOM_ANNOTATIONS}"
+OCI_IMAGE_ANNOTATION_NAME ??= "${IMAGE_BASENAME}"
+OCI_IMAGE_ANNOTATION_DESCRIPTION ??= "${IMAGE_NAME} by ${USER} on ${BUILD_SYS}"
+OCI_IMAGE_ANNOTATION_VENDOR ??= "${TARGET_VENDOR}"
 
+def strip_image_version_suffix(d):
+    image_version_suffix = d.getVar('IMAGE_VERSION_SUFFIX', True)
+    if not image_version_suffix:
+        bb.debug(1, "OCI: Cannot get IMAGE_VERSION_SUFFIX, returning latest")
+        return "latest"
+    if image_version_suffix[0] == '-':
+        image_version_suffix = image_version_suffix[1:]
+        bb.debug(1, "OCI: Stripping '-' from IMAGE_VERSION_SUFFIX: " + image_version_suffix)
+    else:
+        bb.debug(1, "OCI: No '-' found so returning IMAGE_VERSION_SUFFIX: " + image_version_suffix)
+    return image_version_suffix
 
-def do_annotation_mount_format(d):
+def annotation_mount_format(d):
     import json
-
     mount_annotation_data = { "tr-181": [ ]}
-
-
-    if not d.getVar('OCI_IMAGE_ANNOTATION_MOUNTS',True):
-        return ""
-
-    for mount in d.getVar('OCI_IMAGE_ANNOTATION_MOUNTS',True).split(" "):
-        if mount != "":
-            source, dest = mount.split(':')
-            mount_annotation_data["tr-181"].append({"Source": source, "Destination": dest})
-    
+    annotation_var = d.getVar('OCI_IMAGE_ANNOTATION_MOUNTS', True)
+    for mount in annotation_var.split(" "):
+        if mount == "":
+            continue
+        bb.debug(1, "Adding: " + mount)
+        source, dest = mount.split(':')
+        mount_annotation_data["tr-181"].append({"Source": source, "Destination": dest})
     mount_annotation_json = json.dumps(mount_annotation_data).replace(" ", "")
-    print("Generated mount annotation string:\n{0}\n".format(mount_annotation_json))
+    bb.debug(1, "Generated mount annotation string:\n{0}\n".format(mount_annotation_json))
     return "'org.prplfoundation.mounts={0}'".format(mount_annotation_json).replace(" ", "")
-
-OCI_IMAGE_ANNOTATIONS += "\
-                        ${@do_annotation_mount_format(d)}\
-                        ${OCI_IMAGE_CUSTOM_ANNOTATIONS}\
-"
 
 # Generate a subarch that is appropriate to OCI image
 # types. This is typically only ARM architectures at the
@@ -105,144 +114,165 @@ OCI_IMAGE_ANNOTATIONS += "\
 def oci_map_subarch(a, f, d):
     import re
     if re.match('arm.*', a):
-        if 'armv7' in f:
+        if 'armv8' in f:
+            return 'v8'
+        elif 'armv7' in f:
             return 'v7'
         elif 'armv6' in f:
             return 'v6'
         elif 'armv5' in f:
             return 'v5'
-            return ''
     return ''
 
-
 IMAGE_CMD:oci() {
-    umoci_options=""
+    umoci_options="--no-history"
 
     bbdebug 1 "UMOCI image settings:"
-    bbdebug 1 "  author: ${OCI_IMAGE_AUTHOR}"
-    bbdebug 1 "  author email: ${OCI_IMAGE_AUTHOR_EMAIL}"
-    bbdebug 1 "  tag: ${OCI_IMAGE_TAG}"
-    bbdebug 1 "  arch: ${OCI_IMAGE_ARCH}"
-    bbdebug 1 "  subarch: ${OCI_IMAGE_SUBARCH}"
-    bbdebug 1 "  entrypoint: ${OCI_IMAGE_ENTRYPOINT}"
-    bbdebug 1 "  entrypoint args: ${OCI_IMAGE_ENTRYPOINT_ARGS}"
-    bbdebug 1 "  labels: ${OCI_IMAGE_LABELS}"
-    bbdebug 1 "  uid: ${OCI_IMAGE_RUNTIME_UID}"
-    bbdebug 1 "  working dir: ${OCI_IMAGE_WORKINGDIR}"
-    bbdebug 1 "  env vars: ${OCI_IMAGE_ENV_VARS}"
-    bbdebug 1 "  ports: ${OCI_IMAGE_PORTS}"
-    bbdebug 1 "  annotations: ${OCI_IMAGE_ANNOTATIONS}"
-
-    OCI_REUSE_IMAGE=""
+    bbdebug 1 "  OCI_IMAGE_AUTHOR:                  ${OCI_IMAGE_AUTHOR}"
+    bbdebug 1 "  OCI_IMAGE_AUTHOR_EMAIL:            ${OCI_IMAGE_AUTHOR_EMAIL}"
+    bbdebug 1 "  OCI_IMAGE_ANNOTATION_NAME:         ${OCI_IMAGE_ANNOTATION_NAME}"
+    bbdebug 1 "  OCI_IMAGE_ANNOTATION_VENDOR:       ${OCI_IMAGE_ANNOTATION_VENDOR}"
+    bbdebug 1 "  OCI_IMAGE_ANNOTATION_DESCRIPTION:  ${OCI_IMAGE_ANNOTATION_DESCRIPTION}"
+    bbdebug 1 "  OCI_IMAGE_TAG:                     ${OCI_IMAGE_TAG}"
+    bbdebug 1 "  OCI_IMAGE_ARCH:                    ${OCI_IMAGE_ARCH}"
+    bbdebug 1 "  OCI_IMAGE_SUBARCH:                 ${OCI_IMAGE_SUBARCH}"
+    bbdebug 1 "  OCI_IMAGE_OS:                      ${OCI_IMAGE_OS}"
+    bbdebug 1 "  OCI_IMAGE_ENTRYPOINT:              ${OCI_IMAGE_ENTRYPOINT}"
+    bbdebug 1 "  OCI_IMAGE_ENTRYPOINT_ARGS:         ${OCI_IMAGE_ENTRYPOINT_ARGS}"
+    bbdebug 1 "  OCI_IMAGE_STOPSIGNAL:              ${OCI_IMAGE_STOPSIGNAL}"
+    bbdebug 1 "  OCI_IMAGE_RUNTIME_UID:             ${OCI_IMAGE_RUNTIME_UID}"
+    bbdebug 1 "  OCI_IMAGE_WORKINGDIR:              ${OCI_IMAGE_WORKINGDIR}"
+    bbdebug 1 "  OCI_IMAGE_ENV_VARS:                ${OCI_IMAGE_ENV_VARS}"
+    bbdebug 1 "  OCI_IMAGE_PORTS:                   ${OCI_IMAGE_PORTS}"
+    bbdebug 1 "  OCI_IMAGE_LABELS:                  ${OCI_IMAGE_LABELS}"
+    bbdebug 1 "  OCI_IMAGE_CUSTOM_ANNOTATIONS:      ${OCI_IMAGE_CUSTOM_ANNOTATIONS}"
+    bbdebug 1 "  OCI_IMAGE_ANNOTATIONS:             ${OCI_IMAGE_ANNOTATIONS}"
+    bbdebug 1 "  OCI_REUSE_IMAGE:                   ${OCI_REUSE_IMAGE}"
+    bbdebug 1 "  IMAGE_BASENAME:                    ${IMAGE_BASENAME}"
+    bbdebug 1 "  IMAGE_NAME:                        ${IMAGE_NAME}"
+    bbdebug 1 "  IMAGE_NAME_SUFFIX:                 ${IMAGE_NAME_SUFFIX}"
+    bbdebug 1 "  IMAGE_LINK_NAME:                   ${IMAGE_LINK_NAME}"
+    bbdebug 1 "  IMAGE_VERSION_SUFFIX:              ${IMAGE_VERSION_SUFFIX}"
 
     # Change into the image deploy dir to avoid having any output operations capture
     # long directories or the location.
-    cd ${IMGDEPLOYDIR}
-
-    new_image=t
-    image_name="${IMAGE_NAME}${IMAGE_NAME_SUFFIX}-oci"
-    image_bundle_name="${IMAGE_NAME}${IMAGE_NAME_SUFFIX}-oci-bundle"
-    if [ -n "$OCI_REUSE_IMAGE" ]; then
-	if [ -d $image_name ]; then
-	    bbdebug 1 "OCI: reusing image directory"
-	    new_image=""
-	fi
-    else
-	bbdebug 1 "OCI: removing existing container image directory"
-	rm -rf $image_name $image_bundle_name
-    fi
+    cd "${IMGDEPLOYDIR}"
 
     if [ -z "${OCI_IMAGE_TAG}" ]; then
-	OCI_IMAGE_TAG="initial-tag"
+        bbdebug 1 "Empty OCI_IMAGE_TAG"
+        exit 1
     fi
 
-    if [ -n "$new_image" ]; then
-	bbdebug 1 "OCI: umoci init --layout $image_name"
-	umoci init --layout $image_name
-	umoci new --image $image_name:${OCI_IMAGE_TAG}
-	umoci unpack --rootless --image $image_name:${OCI_IMAGE_TAG} $image_bundle_name
+    oci_image_tag="${OCI_IMAGE_TAG}"
+    new_image="true"
+    image_name="${IMAGE_NAME}${IMAGE_NAME_SUFFIX}-oci"
+    image_bundle_name="${image_name}-bundle"
+    if [ "${OCI_REUSE_IMAGE}" == "true" ]; then
+        if [ -d "${image_name}" ]; then
+            bbdebug 1 "OCI: reusing image directory"
+            new_image="false"
+        else
+            bbdebug 1 "OCI: not cannot reuse image directory, creating new one"
+            new_image="true"
+        fi
     else
-	# todo: create a different tag, after checking if the passed one exists
-	true
+        bbdebug 1 "OCI: removing existing container image directory"
+        rm -rf ${image_name} ${image_bundle_name}
+    fi
+
+    if [ "${new_image}" == "true" ]; then
+        bbdebug 1 "OCI: umoci init --layout ${image_name}"
+        umoci init --layout ${image_name}
+        bbdebug 1 "OCI: umoci new --image ${image_name}:${oci_image_tag}"
+        umoci new --image ${image_name}:${oci_image_tag}
+        bbdebug 1 "OCI: umoci unpack --rootless --image ${image_name}:${oci_image_tag} ${image_bundle_name}"
+        umoci unpack --rootless --image "${image_name}:${oci_image_tag}" "${image_bundle_name}"
     fi
 
     bbdebug 1 "OCI: populating rootfs"
-    bbdebug 1 "OCI: cp -r ${IMAGE_ROOTFS}/* $image_bundle_name/rootfs/"
+    bbdebug 1 "OCI: cp -r ${IMAGE_ROOTFS}/* ${image_bundle_name}/rootfs/"
     # enable dotglob to allow copying hidden files from the root directory
     shopt -s dotglob
-    cp -r ${IMAGE_ROOTFS}/* $image_bundle_name/rootfs
+    cp -r ${IMAGE_ROOTFS}/* "${image_bundle_name}/rootfs/"
     shopt -u dotglob
 
-    bbdebug 1 "OCI: umoci repack --image $image_name:${OCI_IMAGE_TAG} $image_bundle_name"
-    umoci repack --image $image_name:${OCI_IMAGE_TAG} $image_bundle_name
+    bbdebug 1 "OCI: umoci repack ${umoci_options} --image ${image_name}:${oci_image_tag} ${image_bundle_name}"
+    umoci repack ${umoci_options} --image "${image_name}:${oci_image_tag}" "${image_bundle_name}"
 
     bbdebug 1 "OCI: configuring image"
     if [ -n "${OCI_IMAGE_LABELS}" ]; then
-	for l in ${OCI_IMAGE_LABELS}; do
-	    bbdebug 1 "OCI: umoci config --image $image_name  --config.label $l"
-	    umoci config --image $image_name  --config.label $l
-	done
+    	for l in ${OCI_IMAGE_LABELS}; do
+            bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --config.label ${l}"
+            umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --config.label "${l}"
+    	done
     fi
     if [ -n "${OCI_IMAGE_ENV_VARS}" ]; then
-	for l in ${OCI_IMAGE_ENV_VARS}; do
-	    bbdebug 1 "umoci config --image $image_name --config.env $l"
-	    umoci config --image $image_name --config.env $l
-	done
+        for l in "${OCI_IMAGE_ENV_VARS}"; do
+            bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --config.env $l"
+            umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --config.env "${l}"
+        done
     fi
     if [ -n "${OCI_IMAGE_PORTS}" ]; then
-	for l in ${OCI_IMAGE_PORTS}; do
-	    bbdebug 1 "umoci config --image $image_name --config.exposedports $l"
-	    umoci config --image $image_name --config.exposedports $l
-	done
+        for l in "${OCI_IMAGE_PORTS}"; do
+            bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --config.exposedports ${l}"
+            umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --config.exposedports "${l}"
+        done
     fi
     if [ -n "${OCI_IMAGE_RUNTIME_UID}" ]; then
-	bbdebug 1 "umoci config --image $image_name  --config.user ${OCI_IMAGE_RUNTIME_UID}"
-	umoci config --image $image_name  --config.user ${OCI_IMAGE_RUNTIME_UID}
+        bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --config.user ${OCI_IMAGE_RUNTIME_UID}"
+        umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --config.user "${OCI_IMAGE_RUNTIME_UID}"
     fi
     if [ -n "${OCI_IMAGE_WORKINGDIR}" ]; then
-	bbdebug 1 "umoci config --image $image_name  --config.workingdir ${OCI_IMAGE_WORKINGDIR}"
-	umoci config --image $image_name  --config.workingdir ${OCI_IMAGE_WORKINGDIR}
+        bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --config.workingdir ${OCI_IMAGE_WORKINGDIR}"
+        umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --config.workingdir "${OCI_IMAGE_WORKINGDIR}"
     fi
     if [ -n "${OCI_IMAGE_OS}" ]; then
-	bbdebug 1 "umoci config --image $image_name  --os ${OCI_IMAGE_OS}"
-	umoci config --image $image_name  --os ${OCI_IMAGE_OS}
+        bbdebug 1 "OCI: umoci ${umoci_options} config --image ${image_name}:${oci_image_tag} --os ${OCI_IMAGE_OS}"
+        umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --os "${OCI_IMAGE_OS}"
     fi
-    if [ -n "${OCI_IMAGE_ANNOTATION_NAME}" ] && [ "${OCI_IMAGE_ANNOTATION_NAME}" != "" ]; then
-        bbdebug 1 "umoci config --image $image_name  --manifest.annotation \"org.opencontainers.image.ref.name=${OCI_IMAGE_ANNOTATION_NAME}\""
-        umoci config --image $image_name  --manifest.annotation "org.opencontainers.image.ref.name=${OCI_IMAGE_ANNOTATION_NAME}"
+    if [ -n "${OCI_IMAGE_STOPSIGNAL}" ]; then
+        bbdebug 1 "umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --config.stopsignal ${OCI_IMAGE_STOPSIGNAL}"
+        umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --config.stopsignal "${OCI_IMAGE_STOPSIGNAL}"
     fi
-    if [ -n "${OCI_IMAGE_ANNOTATION_VENDOR}" ] && [ "${OCI_IMAGE_ANNOTATION_VENDOR}" != "" ]; then
-        bbdebug 1 "umoci config --image $image_name  --manifest.annotation \"org.opencontainers.image.vendor=${OCI_IMAGE_ANNOTATION_VENDOR}\""
-        umoci config --image $image_name  --manifest.annotation "org.opencontainers.image.vendor=${OCI_IMAGE_ANNOTATION_VENDOR}"
+    if [ -n "${OCI_IMAGE_ANNOTATION_NAME}" ]; then
+        bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --manifest.annotation \"org.opencontainers.image.ref.name=${OCI_IMAGE_ANNOTATION_NAME}\""
+        umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --manifest.annotation "org.opencontainers.image.ref.name=${OCI_IMAGE_ANNOTATION_NAME}"
     fi
-    if [ -n "${OCI_IMAGE_ANNOTATION_DESCRIPTION}" ] && [ "${OCI_IMAGE_ANNOTATION_DESCRIPTION}" != "" ]; then
-        bbdebug 1 "umoci config --image $image_name  --manifest.annotation \"org.opencontainers.image.description=${OCI_IMAGE_ANNOTATION_VENDOR}\""
-        umoci config --image $image_name  --manifest.annotation "org.opencontainers.image.description=${OCI_IMAGE_ANNOTATION_DESCRIPTION}"
+    if [ -n "${OCI_IMAGE_ANNOTATION_VENDOR}" ]; then
+        bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --manifest.annotation \"org.opencontainers.image.vendor=${OCI_IMAGE_ANNOTATION_VENDOR}\""
+        umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --manifest.annotation "org.opencontainers.image.vendor=${OCI_IMAGE_ANNOTATION_VENDOR}"
     fi
-    if [ -n "${OCI_IMAGE_ANNOTATIONS}" ]  && [ "${OCI_IMAGE_ANNOTATIONS}" != " " ]; then
-    for annotation in "${OCI_IMAGE_ANNOTATIONS}"; do
-        if [ "${annotation}" != "None" ]; then
-            bbdebug 1 "annotation = ${annotation}"
-            bbdebug 1 "umoci config --image $image_name  --manifest.annotation ${annotation}"
-            umoci config --image $image_name  --manifest.annotation ${annotation}
-        fi
-    done
+    if [ -n "${OCI_IMAGE_ANNOTATION_DESCRIPTION}" ]; then
+        bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --manifest.annotation \"org.opencontainers.image.description=${OCI_IMAGE_ANNOTATION_VENDOR}\""
+        umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --manifest.annotation "org.opencontainers.image.description=${OCI_IMAGE_ANNOTATION_DESCRIPTION}"
     fi
-    bbdebug 1 "umoci config --image $image_name  --architecture ${OCI_IMAGE_ARCH}"
-    umoci config --image $image_name  --architecture ${OCI_IMAGE_ARCH}
+    if [ -n "${OCI_IMAGE_ANNOTATIONS}" ]; then
+        for annotation in "${OCI_IMAGE_ANNOTATIONS}"; do
+            if [ "${annotation}" != "None" ]; then
+                bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --manifest.annotation ${annotation}"
+                umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --manifest.annotation "${annotation}"
+            fi
+        done
+    fi
+
+    bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --architecture ${OCI_IMAGE_ARCH}"
+    umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --architecture "${OCI_IMAGE_ARCH}"
     # NOTE: umoci doesn't currently expose setting the architecture variant,
     #       so if you need it use sloci instead
     if [ -n "${OCI_IMAGE_SUBARCH}" ]; then
-	bbnote "OCI: image subarch is set to: ${OCI_IMAGE_SUBARCH}, but umoci does not"
-	bbnote "     expose variants. use sloci instead if this is important"
+        bbnote "OCI: image subarch is set to: ${OCI_IMAGE_SUBARCH}, but umoci does not"
+        bbnote "     expose variants. use sloci instead if this is important"
     fi
-    umoci config --image $image_name  --config.entrypoint ${OCI_IMAGE_ENTRYPOINT}
-    if [ -n "${OCI_IMAGE_ENTRYPOINT_ARGS}" ]; then
-	umoci config --image $image_name  --config.cmd "${OCI_IMAGE_ENTRYPOINT_ARGS}"
-    fi
-    umoci config --image $image_name  --author ${OCI_IMAGE_AUTHOR_EMAIL}
 
-    umoci gc --layout $image_name
+    umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" \
+         ${@" ".join("--config.entrypoint %s" % s for s in d.getVar("OCI_IMAGE_ENTRYPOINT").split())}
+    if [ -n "${OCI_IMAGE_ENTRYPOINT_ARGS}" ]; then
+        umoci config ${umoci_options} --image $image_name:${OCI_IMAGE_TAG} ${@" ".join("--config.cmd %s" % s for s in d.getVar("OCI_IMAGE_ENTRYPOINT_ARGS").split())}
+    fi
+
+    umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --author "${OCI_IMAGE_AUTHOR_EMAIL}"
+
+    umoci gc --layout "${image_name}"
 
     # make a tar version of the image direcotry
     #  1) image_name.tar: compatible with oci tar format, blobs and rootfs
@@ -250,21 +280,23 @@ IMAGE_CMD:oci() {
     #  2) image_name-dir.tar: original format from meta-virt, is just a tar'd
     #     up oci image directory (compatible with skopeo :dir format)
     if [ -n "${OCI_IMAGE_TAR_OUTPUT}" ]; then
-    (
-	    cd "$image_name"
-	    tar -cf ../"$image_name.tar" "."
-	)
-	tar -cf "$image_name-dir.tar" "$image_name"
-
-	# create a convenience symlink
-	ln -sf "$image_name.tar" "${IMAGE_BASENAME}-${OCI_IMAGE_TAG}-rootfs-oci.tar"
-	ln -sf "$image_name-dir.tar" "${IMAGE_BASENAME}-${OCI_IMAGE_TAG}-rootfs-oci-dir.tar"
+        bbdebug 1 "OCI: Tarring OCI image compatible with oci tar format: ${image_name}.tar"
+        (
+            cd "${image_name}"
+            tar -cf "../${image_name}.tar" "."
+        )
+        bbdebug 1 "OCI: Tarring OCI image compatible with meta-virt and skopeo dir format: ${image_name}-dir.tar"
+        tar -cf "${image_name}-dir.tar" "${image_name}"
+        # create a convenience symlink
+        bbdebug 1 "OCI: Create convience symlinks for both tar formats: ${image_name}.tar ${image_name}-dir.tar"
+        ln -sf "${image_name}.tar" "${IMAGE_BASENAME}-${oci_image_tag}-rootfs-oci.tar"
+        ln -sf "${image_name}-dir.tar" "${IMAGE_BASENAME}-${oci_image_tag}-rootfs-oci-dir.tar"
     fi
 
     # We could make this optional, since the bundle is directly runnable via runc
-    rm -rf $image_bundle_name
+    bbdebug 1 "OCI: Cleanup ${image_bundle_name}"
+    rm -rf "${image_bundle_name}"
 
-    ln -sfr ${IMAGE_NAME}${IMAGE_NAME_SUFFIX}-oci ${IMAGE_LINK_NAME}${IMAGE_NAME_SUFFIX}-oci
+    bbdebug 1 "OCI: Create convience symlinks for oci directory that skopeo can upload: ${image_name}"
+    ln -sfr "${image_name}" "${IMAGE_LINK_NAME}${IMAGE_NAME_SUFFIX}-oci"
 }
-
-

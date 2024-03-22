@@ -28,4 +28,3 @@ IMAGE_FEATURES += "${@bb.utils.contains('LCM_SYSBUS','pcb-bus','pcb-bus','',d)}"
 OCI_IMAGE_ENTRYPOINT ?= "/sbin/init"
 OCI_IMAGE_ANNOTATION_MOUNTS += "/var/run/imtp/:/run/imtp/"
 OCI_IMAGE_ENV_VARS = "INFINITESIMAL_BELOVED_PIDFILE=/var/run/ubus.pid"
-
