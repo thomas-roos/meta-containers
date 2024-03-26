@@ -167,7 +167,7 @@ IMAGE_CMD:oci() {
     new_image="true"
     image_name="${IMAGE_NAME}${IMAGE_NAME_SUFFIX}-oci"
     image_bundle_name="${image_name}-bundle"
-    if [ "${OCI_REUSE_IMAGE}" == "true" ]; then
+    if [ "${OCI_REUSE_IMAGE}" = "true" ]; then
         if [ -d "${image_name}" ]; then
             bbdebug 1 "OCI: reusing image directory"
             new_image="false"
@@ -180,7 +180,7 @@ IMAGE_CMD:oci() {
         rm -rf ${image_name} ${image_bundle_name}
     fi
 
-    if [ "${new_image}" == "true" ]; then
+    if [ "${new_image}" = "true" ]; then
         bbdebug 1 "OCI: umoci init --layout ${image_name}"
         umoci init --layout ${image_name}
         bbdebug 1 "OCI: umoci new --image ${image_name}:${oci_image_tag}"
@@ -191,10 +191,7 @@ IMAGE_CMD:oci() {
 
     bbdebug 1 "OCI: populating rootfs"
     bbdebug 1 "OCI: cp -r ${IMAGE_ROOTFS}/* ${image_bundle_name}/rootfs/"
-    # enable dotglob to allow copying hidden files from the root directory
-    shopt -s dotglob
-    cp -r ${IMAGE_ROOTFS}/* "${image_bundle_name}/rootfs/"
-    shopt -u dotglob
+    cp -r ${IMAGE_ROOTFS}/. "${image_bundle_name}/rootfs/"
 
     bbdebug 1 "OCI: umoci repack ${umoci_options} --image ${image_name}:${oci_image_tag} ${image_bundle_name}"
     umoci repack ${umoci_options} --image "${image_name}:${oci_image_tag}" "${image_bundle_name}"
