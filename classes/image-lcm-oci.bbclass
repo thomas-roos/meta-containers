@@ -232,8 +232,8 @@ IMAGE_CMD:oci() {
         umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --config.stopsignal "${OCI_IMAGE_STOPSIGNAL}"
     fi
     if [ -n "${OCI_IMAGE_ANNOTATION_NAME}" ]; then
-        bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --manifest.annotation \"org.opencontainers.image.ref.name=${OCI_IMAGE_ANNOTATION_NAME}\""
-        umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --manifest.annotation "org.opencontainers.image.ref.name=${OCI_IMAGE_ANNOTATION_NAME}"
+        bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --manifest.annotation \"org.opencontainers.image.title=${OCI_IMAGE_ANNOTATION_NAME}\""
+        umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --manifest.annotation "org.opencontainers.image.title=${OCI_IMAGE_ANNOTATION_NAME}"
     fi
     if [ -n "${OCI_IMAGE_ANNOTATION_VENDOR}" ]; then
         bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --manifest.annotation \"org.opencontainers.image.vendor=${OCI_IMAGE_ANNOTATION_VENDOR}\""
