@@ -14,10 +14,10 @@ LCM_SYSBUS ??= "ubus"
 # You should think to override the default values defined in the pcb-defaut conf
 
 
-# Default feature to provide a LCM container image type
+# Default feature to provide a LCM container image type: AMX and USP base package
 IMAGE_FEATURES += " \
                    amx \
-                   usp-endpoint \
+                   usp-base \
                    "
 
 # Automatically determine the bus to include according the DISTRO_Feature variable
