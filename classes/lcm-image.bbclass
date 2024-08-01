@@ -9,6 +9,7 @@
 
 FEATURE_PACKAGES_pcb-bus = "packagegroup-pcb" 
 FEATURE_PACKAGES_usp-endpoint = "packagegroup-usp-endpoint" 
+FEATURE_PACKAGES_usp-base = "packagegroup-usp-base"
 FEATURE_PACKAGES_amx = "packagegroup-amx-core" 
 FEATURE_PACKAGES_ubus = "packagegroup-ubus" 
 FEATURE_PACKAGES_lcm-core = "packagegroup-lcm-core"
