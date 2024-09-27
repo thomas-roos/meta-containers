@@ -204,7 +204,7 @@ IMAGE_CMD:oci() {
     	done
     fi
     if [ -n "${OCI_IMAGE_ENV_VARS}" ]; then
-        for l in "${OCI_IMAGE_ENV_VARS}"; do
+        for l in ${OCI_IMAGE_ENV_VARS}; do
             bbdebug 1 "OCI: umoci config ${umoci_options} --image ${image_name}:${oci_image_tag} --config.env $l"
             umoci config ${umoci_options} --image "${image_name}:${oci_image_tag}" --config.env "${l}"
         done
