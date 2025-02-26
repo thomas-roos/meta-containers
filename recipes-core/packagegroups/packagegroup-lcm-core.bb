@@ -8,7 +8,7 @@ inherit packagegroup
 
 RDEPENDS:${PN} =" \
     ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', d.getVar('VIRTUAL-RUNTIME_initscripts', True), '', d)} \
-    inf-init-esimal \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'systemd','', 'inf-init-esimal', d)} \
     base-files \
     base-passwd \
     busybox \
