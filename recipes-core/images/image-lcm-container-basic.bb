@@ -22,11 +22,11 @@ NO_RECOMMENDATIONS = "1"
 
 PREFERRED_PROVIDER_virtual/kernel = "linux-dummy"
 
-IMAGE_INSTALL:append:develop += "\
+IMAGE_INSTALL:append:develop = "\
      strace procps gdb valgrind tcpdump binutils nano \
 "
 
-IMAGE_INSTALL:append:release += "\
+IMAGE_INSTALL:append:release = "\
 "
 
 OCI_IMAGE_ENTRYPOINT ?= "/sbin/init"
