@@ -4,6 +4,7 @@
 # Copy it to /etc/init.d/syslog-ng and type
 # > update-rc.d syslog-ng defaults 5
 #
+export PATH=$PATH:/sbin
 
 # Source function library
 . /etc/init.d/functions
@@ -20,7 +21,9 @@ case "$1" in
   start)
     [ "${VERBOSE}" != "no" ] && echo -n "Starting syslog-ng:"
     [ ! -d "${RUNDIR}" ] && mkdir ${RUNDIR} || echo "Couldn't create ${RUNDIR}"
+    sleep 5
     start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $syslog_ng
+    systemctl restart systemd-journald
     [ "${VERBOSE}" != "no" ] && echo "."
     ;;
   stop)
